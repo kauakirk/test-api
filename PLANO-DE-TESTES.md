@@ -23,19 +23,37 @@ O objetivo desta suíte de testes é validar o comportamento da API de usuários
   - `DELETE /usuarios/{_id}` - excluir usuário
 - Endpoint de autenticação:
   - `POST /login` - login de usuário
+- Endpoint de produtos:
+  - `GET /produtos` - listar produtos
+  - `POST /produtos` - cadastrar produto (exige token de admin)
+  - `GET /produtos/{_id}` - buscar produto por ID
+  - `PUT /produtos/{_id}` - editar produto (exige token de admin)
+  - `DELETE /produtos/{_id}` - excluir produto (exige token de admin)
+- Endpoint de carrinhos:
+  - `GET /carrinhos` - listar carrinhos
+  - `POST /carrinhos` - cadastrar carrinho (exige token do usuário)
+  - `GET /carrinhos/{_id}` - buscar carrinho por ID
+  - `DELETE /carrinhos/concluir-compra` - concluir compra do carrinho autenticado
+  - `DELETE /carrinhos/cancelar-compra` - cancelar compra e reabastecer estoque
 - Regras de negócio importantes:
   - não permitir cadastro com email já existente
   - não permitir edição para email já utilizado por outro usuário
   - permitir criação de usuário via PUT em ID inexistente, conforme comportamento observado
   - validar mensagens e códigos de status esperados
+  - validar autorização de rotas administrativas para produtos
+  - validar fluxo de token para carrinho vinculado ao usuário logado
 
 ### Fora do escopo inicial
 
-- Endpoints de produtos (`/produtos`)
-- Endpoints de carrinhos (`/carrinhos`)
 - Testes de performance ou carga
-- Testes de segurança (autenticação/autorizações complexas) além do login básico
 - Testes de UI ou frontend
+
+## Organização dos testes
+
+- `test_usuario.py` - casos de usuário e endpoints de cadastro/consulta/edição/exclusão
+- `test_login.py` - casos de autenticação de usuário
+- `test_produtos.py` - casos de produtos com autorização de administrador
+- `test_carrinhos.py` - casos de carrinho e fluxo de usuário autenticado
 
 ## Cenários a implementar
 
@@ -54,7 +72,9 @@ O objetivo desta suíte de testes é validar o comportamento da API de usuários
 
 - Deve autenticar um usuário válido e retornar `200`
 - Deve retornar token/autorização no corpo da resposta
-- Deve falhar com credenciais inválidas (próximo passo)
+- Deve falhar com `401` quando a senha estiver incorreta
+- Deve falhar com `401` quando o email não existir
+- Deve falhar com `400` quando campos estiverem vazios
 
 ### Endpoint `GET /usuarios?_id={id}`
 
@@ -71,6 +91,65 @@ O objetivo desta suíte de testes é validar o comportamento da API de usuários
 
 - Deve excluir usuário existente e retornar mensagem de sucesso
 - Deve retornar comportamento consistente quando o usuário não existe
+
+### Endpoint `GET /produtos`
+
+- Deve retornar status `200` e lista de produtos
+- Deve retornar `quantidade` e `produtos`
+
+### Endpoint `POST /produtos`
+
+- Deve cadastrar produto com token de administrador e retornar `201`
+- Deve falhar com `401` quando o token de admin estiver ausente
+- Deve falhar com `403` quando o token não pertencer a administrador
+- Deve falhar com `400` quando nome de produto duplicado
+
+### Endpoint `GET /produtos/{id}`
+
+- Deve retornar o produto correto ao buscar por ID
+- Deve retornar `400` quando o produto não existir
+
+### Endpoint `PUT /produtos/{id}`
+
+- Deve editar produto existente com token de admin e retornar `200`
+- Deve criar novo produto se o ID não existir e retornar `201`
+- Deve falhar com `401` sem token de admin
+- Deve falhar com `403` quando o token não for de admin
+
+### Endpoint `DELETE /produtos/{id}`
+
+- Deve excluir produto existente com token de admin e retornar mensagem de sucesso
+- Deve falhar com `401` sem token de admin
+- Deve falhar com `403` quando o token não for de admin
+- Deve falhar com `400` quando o produto faz parte de carrinho
+
+### Endpoint `GET /carrinhos`
+
+- Deve retornar status `200` e lista de carrinhos
+- Deve retornar `quantidade` e `carrinhos`
+
+### Endpoint `POST /carrinhos`
+
+- Deve cadastrar carrinho com token de usuário e retornar `201`
+- Deve falhar com `401` quando o token estiver ausente ou inválido
+- Deve falhar com `400` para produtos inválidos, quantidade insuficiente ou duplicada
+
+### Endpoint `GET /carrinhos/{id}`
+
+- Deve retornar o carrinho correto ao buscar por ID
+- Deve retornar `400` quando o carrinho não existir
+
+### Endpoint `DELETE /carrinhos/concluir-compra`
+
+- Deve excluir o carrinho do usuário autenticado e retornar mensagem de sucesso
+- Deve retornar mensagem consistente quando não existir carrinho para o usuário
+- Deve falhar com `401` sem token válido
+
+### Endpoint `DELETE /carrinhos/cancelar-compra`
+
+- Deve excluir o carrinho e reabastecer estoque
+- Deve retornar mensagem consistente quando não existir carrinho
+- Deve falhar com `401` sem token válido
 
 ## Critérios de qualidade
 
