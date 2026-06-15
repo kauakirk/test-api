@@ -20,25 +20,36 @@ def test_can_get_users():
     assert "usuarios" in body
     assert isinstance(body["usuarios"], list)
 
-def test_can_login():
-    payload = login_payload()
-    response = post_login(payload)
-    
-    body = response.json()
-    print(body
-          )
-    assert response.status_code == 200
-    assert body ["message"]  == "Login realizado com sucesso"
+
 
 def test_can_create_user():
-    payload = new_user_payload()
-    response = post_create_user(payload)
+    user_payload = new_user_payload()
+    response = post_create_user(user_payload)
     body = response.json()
 
     assert response.status_code == 201
     assert body["message"] == "Cadastro realizado com sucesso"
     assert "_id" in body 
 
+def test_can_create_user_and_login():
+    user_payload = new_user_payload()
+
+    create_response = post_create_user(user_payload)
+
+    assert create_response.status_code == 201
+
+    login_payload = {
+        "email": user_payload["email"],
+        "password": user_payload["password"]
+    }
+
+    login_response = post_login(login_payload)
+
+    body = login_response.json()
+
+    assert login_response.status_code == 200
+    assert body["message"] == "Login realizado com sucesso"
+    assert "authorization" in body
 
 
 def post_login(payload):
@@ -59,10 +70,6 @@ def new_user_payload():
         "administrador": "false"
 
     }
-def login_payload():
-    return {
-        "email": "fulano@qa.com",
-        "password": "teste"
-    }
+
 
     
