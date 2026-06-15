@@ -96,6 +96,20 @@ def test_can_create_user_and_edit():
     assert edit_response.status_code == 200
     assert edit_response.json()["message"] == "Registro alterado com sucesso"
 
+def test_can_edit_nonexistent_user_and_create_new_one():
+    payload = new_user_payload()
+
+    response = put_edit_user(
+        "usuario_inexistente",
+        payload
+    )
+
+    body = response.json()
+
+    assert response.status_code == 201
+    assert body["message"] == "Cadastro realizado com sucesso"
+    assert "_id" in body
+
 
 def put_edit_user(user_id, payload):
     return requests.put(
