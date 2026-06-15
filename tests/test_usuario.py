@@ -1,18 +1,15 @@
-import requests
-import uuid
-
-
-ENDPOINT = 'https://compassuol.serverest.dev'
-
+from services.usuarios_service import UsuariosService
+from utils.payloads import new_user_payload
+from services.api_client import get
 
 
 def test_can_call_endpoint():
-    response = requests.get(ENDPOINT)
+    response = get("")
     assert response.status_code == 200
 
-def test_can_get_users():
-    response = get_users()
 
+def test_can_get_users():
+    response = UsuariosService.list_all()
     body = response.json()
 
     assert response.status_code == 200
@@ -21,74 +18,68 @@ def test_can_get_users():
     assert isinstance(body["usuarios"], list)
 
 
-
 def test_can_create_user():
     user_payload = new_user_payload()
-    response = post_create_user(user_payload)
+    response = UsuariosService.create(user_payload)
     body = response.json()
 
     assert response.status_code == 201
     assert body["message"] == "Cadastro realizado com sucesso"
-    assert "_id" in body 
+    assert "_id" in body
+
 
 def test_cannot_create_user_without_email():
     payload = {
         "nome": "Fulano",
         "password": "123",
-        "administrador": "false"
+        "administrador": "false",
     }
 
-    response = post_create_user(payload)
-
+    response = UsuariosService.create(payload)
     body = response.json()
 
     assert response.status_code == 400
     assert "email" in body
 
+
 def test_can_create_user_and_login():
     user_payload = new_user_payload()
 
-    create_response = post_create_user(user_payload)
-
+    create_response = UsuariosService.create(user_payload)
     assert create_response.status_code == 201
 
-    login_payload = {
-        "email": user_payload["email"],
-        "password": user_payload["password"]
-    }
-
-    login_response = post_login(login_payload)
-
+    login_response = UsuariosService.login({"email": user_payload["email"], "password": user_payload["password"]})
     body = login_response.json()
 
     assert login_response.status_code == 200
     assert body["message"] == "Login realizado com sucesso"
     assert "authorization" in body
 
+
 def test_can_create_and_delete_user():
     user_payload = new_user_payload()
 
-    create_response = post_create_user(user_payload)
-
+    create_response = UsuariosService.create(user_payload)
     assert create_response.status_code == 201
 
     user_id = create_response.json()["_id"]
-    delete_response = delete_user(user_id)
+    delete_response = UsuariosService.delete(user_id)
 
     assert delete_response.status_code == 200
     assert delete_response.json()["message"] == "Registro excluído com sucesso"
 
+
 def test_can_delete_nonexistent_user():
-    delete_response = delete_user("nonexistent_user_id")
+    delete_response = UsuariosService.delete("nonexistent_user_id")
 
     assert delete_response.status_code == 200
     assert delete_response.json()["message"] == "Nenhum registro excluído"
 
+
 def test_can_create_user_and_edit():
     user_payload = new_user_payload()
 
-    create_response = post_create_user(user_payload)
-
+    create_response = UsuariosService.create(user_payload)
     assert create_response.status_code == 201
 
     user_id = create_response.json()["_id"]
@@ -97,24 +88,19 @@ def test_can_create_user_and_edit():
         "nome": "Usuario Editado",
         "email": user_payload["email"],
         "password": user_payload["password"],
-        "administrador": "true"
+        "administrador": "true",
     }
 
-    edit_response = put_edit_user(
-        user_id,
-        edited_payload
-    )
+    edit_response = UsuariosService.update(user_id, edited_payload)
 
     assert edit_response.status_code == 200
     assert edit_response.json()["message"] == "Registro alterado com sucesso"
 
+
 def test_can_edit_nonexistent_user_and_create_new_one():
     payload = new_user_payload()
 
-    response = put_edit_user(
-        "usuario_inexistente",
-        payload
-    )
+    response = UsuariosService.update("usuario_inexistente", payload)
 
     body = response.json()
 
@@ -122,12 +108,13 @@ def test_can_edit_nonexistent_user_and_create_new_one():
     assert body["message"] == "Cadastro realizado com sucesso"
     assert "_id" in body
 
+
 def test_cannot_edit_user_to_existing_email():
     first_user = new_user_payload()
     second_user = new_user_payload()
 
-    first_response = post_create_user(first_user)
-    second_response = post_create_user(second_user)
+    first_response = UsuariosService.create(first_user)
+    second_response = UsuariosService.create(second_user)
 
     second_user_id = second_response.json()["_id"]
 
@@ -135,83 +122,42 @@ def test_cannot_edit_user_to_existing_email():
         "nome": second_user["nome"],
         "email": first_user["email"],
         "password": second_user["password"],
-        "administrador": second_user["administrador"]
+        "administrador": second_user["administrador"],
     }
 
-    response = put_edit_user(
-        second_user_id,
-        edited_payload
-    )
+    response = UsuariosService.update(second_user_id, edited_payload)
 
     body = response.json()
 
     assert response.status_code == 400
     assert body["message"] == "Este email já está sendo usado"
 
+
 def test_cannot_create_user_with_existing_email():
     user_payload = new_user_payload()
 
-    first_response = post_create_user(user_payload)
-
+    first_response = UsuariosService.create(user_payload)
     assert first_response.status_code == 201
 
-    second_response = post_create_user(user_payload)
-
+    second_response = UsuariosService.create(user_payload)
     body = second_response.json()
 
     assert second_response.status_code == 400
     assert body["message"] == "Este email já está sendo usado"
 
+
 def test_can_get_user_by_id():
     payload = new_user_payload()
 
-    create_response = post_create_user(payload)
-
+    create_response = UsuariosService.create(payload)
     user_id = create_response.json()["_id"]
 
-    response = get_user_by_id(user_id)
-
+    response = UsuariosService.get_by_id(user_id)
     body = response.json()
 
     assert response.status_code == 200
     assert body["quantidade"] == 1
     assert body["usuarios"][0]["_id"] == user_id
-
-
-
-def put_edit_user(user_id, payload):
-    return requests.put(
-        ENDPOINT + f"/usuarios/{user_id}",
-        json=payload
-    )
-
-def get_user_by_id(user_id):
-    return requests.get(
-        ENDPOINT + "/usuarios",
-        params={"_id": user_id}
-    )
-
-def delete_user(user_id):
-    return requests.delete(ENDPOINT + f"/usuarios/{user_id}")
-
-def post_login(payload):
-    return requests.post(ENDPOINT + "/login", json=payload)
-
-def get_users():
-    return requests.get(ENDPOINT + "/usuarios")
-
-def post_create_user(payload):
-    return requests.post(ENDPOINT + "/usuarios", json=payload)
-
-def new_user_payload():
-    unique_id = uuid.uuid4().hex
-    return{
-        "nome": f"Fulano{unique_id}",
-        "email": f"fulano_{unique_id}@gmail.com",
-        "password": "123",
-        "administrador": "false"
-
-    }
 
 
     
