@@ -31,7 +31,19 @@ def test_can_create_user():
     assert body["message"] == "Cadastro realizado com sucesso"
     assert "_id" in body 
 
+def test_cannot_create_user_without_email():
+    payload = {
+        "nome": "Fulano",
+        "password": "123",
+        "administrador": "false"
+    }
 
+    response = post_create_user(payload)
+
+    body = response.json()
+
+    assert response.status_code == 400
+    assert "email" in body
 
 def test_can_create_user_and_login():
     user_payload = new_user_payload()
@@ -149,7 +161,7 @@ def test_cannot_create_user_with_existing_email():
 
     assert second_response.status_code == 400
     assert body["message"] == "Este email já está sendo usado"
-    
+
 def test_can_get_user_by_id():
     payload = new_user_payload()
 
