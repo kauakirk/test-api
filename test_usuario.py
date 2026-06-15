@@ -14,7 +14,7 @@ def test_can_call_endpoint():
 
 
 def test_can_login():
-    response = post_login()
+    response = post_login(payload)
     
     body = response.json()
     print(body
@@ -24,7 +24,8 @@ def test_can_login():
 
 
 
-
-
-def post_login():
+def post_login(payload):
     return requests.post(ENDPOINT + "/login", json=payload)
+
+def get_users(payload):
+    return requests.get(ENDPOINT + "/usuarios", json=payload)
