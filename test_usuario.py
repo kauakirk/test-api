@@ -24,3 +24,10 @@ def test_can_login():
           )
     assert response.status_code == 200
     assert body ["message"]  == "Login realizado com sucesso"
+
+
+
+
+
+def post_login():
+    return requests.post(ENDPOINT + "/login", json=payload)
