@@ -149,6 +149,22 @@ def test_cannot_create_user_with_existing_email():
 
     assert second_response.status_code == 400
     assert body["message"] == "Este email já está sendo usado"
+    
+def test_can_get_user_by_id():
+    payload = new_user_payload()
+
+    create_response = post_create_user(payload)
+
+    user_id = create_response.json()["_id"]
+
+    response = get_user_by_id(user_id)
+
+    body = response.json()
+
+    assert response.status_code == 200
+    assert body["quantidade"] == 1
+    assert body["usuarios"][0]["_id"] == user_id
+
 
 
 def put_edit_user(user_id, payload):
