@@ -23,4 +23,4 @@ def test_can_login():
     print(body
           )
     assert response.status_code == 200
-    assert body ["message"]  == "Login realizado com sucessos"
+    assert body ["message"]  == "Login realizado com sucesso"
