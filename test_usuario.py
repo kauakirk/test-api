@@ -1,11 +1,9 @@
 import requests
+import uuid
 
 
 ENDPOINT = 'https://compassuol.serverest.dev/'
-payload = {
-        "email": "fulano@qa.com",
-        "password": "teste",
-    }
+
 
 
 def test_can_call_endpoint():
@@ -14,6 +12,7 @@ def test_can_call_endpoint():
 
 
 def test_can_login():
+    payload = login_payload()
     response = post_login(payload)
     
     body = response.json()
@@ -29,3 +28,19 @@ def post_login(payload):
 
 def get_users(payload):
     return requests.get(ENDPOINT + "/usuarios", json=payload)
+
+def new_payload():
+    unique_id = uuid.uuid4().hex
+    return{
+        "nome": f"Fulano{unique_id}",
+        "email": f"fulano_{unique_id}@gmail.com",
+        "password": "123",
+        "administrador": "false"
+
+    }
+def login_payload():
+    return {
+        "email": "fulano@qa.com",
+        "password": "teste"
+    }
+    
