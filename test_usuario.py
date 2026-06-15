@@ -3,9 +3,13 @@ import requests
 
 ENDPOINT = 'https://compassuol.serverest.dev/'
 
-response = requests.get(ENDPOINT)
-print(response)
-print(response.status_code)
+
+
+def test_can_call_endpoint():
+    response = request.get(ENDPOINT)
+    assert response.status_code == 200
+
+
 
 
 
