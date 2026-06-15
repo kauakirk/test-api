@@ -66,6 +66,12 @@ def test_can_create_and_delete_user():
     assert delete_response.status_code == 200
     assert delete_response.json()["message"] == "Registro excluído com sucesso"
 
+def test_can_delete_nonexistent_user():
+    delete_response = delete_user("nonexistent_user_id")
+
+    assert delete_response.status_code == 200
+    assert delete_response.json()["message"] == "Nenhum registro excluído"
+
 
 
 def delete_user(user_id):
