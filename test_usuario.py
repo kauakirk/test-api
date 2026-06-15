@@ -110,6 +110,32 @@ def test_can_edit_nonexistent_user_and_create_new_one():
     assert body["message"] == "Cadastro realizado com sucesso"
     assert "_id" in body
 
+def test_cannot_edit_user_to_existing_email():
+    first_user = new_user_payload()
+    second_user = new_user_payload()
+
+    first_response = post_create_user(first_user)
+    second_response = post_create_user(second_user)
+
+    second_user_id = second_response.json()["_id"]
+
+    edited_payload = {
+        "nome": second_user["nome"],
+        "email": first_user["email"],
+        "password": second_user["password"],
+        "administrador": second_user["administrador"]
+    }
+
+    response = put_edit_user(
+        second_user_id,
+        edited_payload
+    )
+
+    body = response.json()
+
+    assert response.status_code == 400
+    assert body["message"] == "Este email já está sendo usado"
+
 
 def put_edit_user(user_id, payload):
     return requests.put(
