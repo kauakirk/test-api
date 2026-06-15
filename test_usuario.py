@@ -31,6 +31,8 @@ def test_can_create_user():
     assert body["message"] == "Cadastro realizado com sucesso"
     assert "_id" in body 
 
+
+
 def test_can_create_user_and_login():
     user_payload = new_user_payload()
 
@@ -51,6 +53,23 @@ def test_can_create_user_and_login():
     assert body["message"] == "Login realizado com sucesso"
     assert "authorization" in body
 
+def test_can_create_and_delete_user():
+    user_payload = new_user_payload()
+
+    create_response = post_create_user(user_payload)
+
+    assert create_response.status_code == 201
+
+    user_id = create_response.json()["_id"]
+    delete_response = delete_user(user_id)
+
+    assert delete_response.status_code == 200
+    assert delete_response.json()["message"] == "Registro excluído com sucesso"
+
+
+
+def delete_user(user_id):
+    return requests.delete(ENDPOINT + f"/usuarios/{user_id}")
 
 def post_login(payload):
     return requests.post(ENDPOINT + "/login", json=payload)
