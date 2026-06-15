@@ -72,9 +72,36 @@ def test_can_delete_nonexistent_user():
     assert delete_response.status_code == 200
     assert delete_response.json()["message"] == "Nenhum registro excluído"
 
+def test_can_create_user_and_edit():
+    user_payload = new_user_payload()
 
-def edit_user(user_id):
-    return requests.put(ENDPOINT + f"/usuarios/{user_id}",)
+    create_response = post_create_user(user_payload)
+
+    assert create_response.status_code == 201
+
+    user_id = create_response.json()["_id"]
+
+    edited_payload = {
+        "nome": "Usuario Editado",
+        "email": user_payload["email"],
+        "password": user_payload["password"],
+        "administrador": "true"
+    }
+
+    edit_response = put_edit_user(
+        user_id,
+        edited_payload
+    )
+
+    assert edit_response.status_code == 200
+    assert edit_response.json()["message"] == "Registro alterado com sucesso"
+
+
+def put_edit_user(user_id, payload):
+    return requests.put(
+        ENDPOINT + f"/usuarios/{user_id}",
+        json=payload
+    )
 
 def delete_user(user_id):
     return requests.delete(ENDPOINT + f"/usuarios/{user_id}")
