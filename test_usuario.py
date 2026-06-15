@@ -18,4 +18,9 @@ def test_can_login():
         f"{ENDPOINT}/login",
         json=payload
     )
-    print(response.json())
+    
+    body = response.json()
+    print(body
+          )
+    assert response.status_code == 200
+    assert body ["message"]  == "Login realizado com sucessos"
