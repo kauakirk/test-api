@@ -73,6 +73,8 @@ def test_can_delete_nonexistent_user():
     assert delete_response.json()["message"] == "Nenhum registro excluído"
 
 
+def edit_user(user_id):
+    return requests.put(ENDPOINT + f"/usuarios/{user_id}",)
 
 def delete_user(user_id):
     return requests.delete(ENDPOINT + f"/usuarios/{user_id}")
