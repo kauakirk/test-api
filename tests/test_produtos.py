@@ -1,53 +1,11 @@
-import requests
-import uuid
-
-BASE_URL = "https://compassuol.serverest.dev"
-
-
-def new_user_payload(administrador="false"):
-    unique_id = uuid.uuid4().hex
-    return {
-        "nome": f"Produto User {unique_id}",
-        "email": f"produto_user_{unique_id}@qa.com",
-        "password": "teste123",
-        "administrador": administrador,
-    }
-
-
-def new_product_payload():
-    unique_id = uuid.uuid4().hex
-    return {
-        "nome": f"Produto Teste {unique_id}",
-        "preco": 100,
-        "descricao": "Produto de teste",
-        "quantidade": 10,
-    }
-
-
-def create_user(payload):
-    return requests.post(BASE_URL + "/usuarios", json=payload)
-
-
-def do_login(payload):
-    return requests.post(BASE_URL + "/login", json=payload)
-
-
-def create_product(token, payload):
-    return requests.post(BASE_URL + "/produtos", json=payload, headers={"Authorization": token})
-
-
-def create_admin_token():
-    admin_payload = new_user_payload(administrador="true")
-    create_response = create_user(admin_payload)
-    assert create_response.status_code == 201
-
-    login_response = do_login({"email": admin_payload["email"], "password": admin_payload["password"]})
-    assert login_response.status_code == 200
-    return login_response.json()["authorization"]
+from services.usuarios_service import UsuariosService
+from services.produtos_service import ProdutosService
+from utils.payloads import new_user_payload, new_product_payload
+from utils.auth import admin_token
 
 
 def test_list_products():
-    response = requests.get(BASE_URL + "/produtos")
+    response = ProdutosService.list_all()
     body = response.json()
 
     assert response.status_code == 200
@@ -57,9 +15,9 @@ def test_list_products():
 
 
 def test_create_product_as_admin():
-    token = create_admin_token()
+    token = admin_token()
     payload = new_product_payload()
-    response = create_product(token, payload)
+    response = ProdutosService.create(token, payload)
     body = response.json()
 
     assert response.status_code == 201
@@ -69,35 +27,74 @@ def test_create_product_as_admin():
 
 def test_create_product_without_token():
     payload = new_product_payload()
-    response = requests.post(BASE_URL + "/produtos", json=payload)
+    response = ProdutosService.create("", payload)
 
     assert response.status_code == 401
 
 
 def test_create_product_as_non_admin_returns_forbidden():
     user_payload = new_user_payload(administrador="false")
-    create_response = create_user(user_payload)
+    create_response = UsuariosService.create(user_payload)
     assert create_response.status_code == 201
 
-    login_response = do_login({"email": user_payload["email"], "password": user_payload["password"]})
+    login_response = UsuariosService.login({"email": user_payload["email"], "password": user_payload["password"]})
     assert login_response.status_code == 200
     token = login_response.json()["authorization"]
 
     payload = new_product_payload()
-    response = create_product(token, payload)
+    response = ProdutosService.create(token, payload)
 
     assert response.status_code == 403
 
 
 def test_get_product_by_id():
-    token = create_admin_token()
+    token = admin_token()
     payload = new_product_payload()
-    creation_response = create_product(token, payload)
+    creation_response = ProdutosService.create(token, payload)
     assert creation_response.status_code == 201
     product_id = creation_response.json()["_id"]
 
-    response = requests.get(BASE_URL + f"/produtos/{product_id}")
+    response = ProdutosService.get_by_id(product_id)
     body = response.json()
+
+    assert response.status_code == 200
+    assert body["_id"] == product_id
+    assert body["nome"] == payload["nome"]
+
+
+def test_update_product_as_admin():
+    token = admin_token()
+    payload = new_product_payload()
+    creation_response = ProdutosService.create(token, payload)
+    assert creation_response.status_code == 201
+    product_id = creation_response.json()["_id"]
+
+    updated_payload = {
+        "nome": payload["nome"] + " Atualizado",
+        "preco": payload["preco"],
+        "descricao": payload["descricao"],
+        "quantidade": payload["quantidade"],
+    }
+
+    response = ProdutosService.update(product_id, updated_payload, token)
+    body = response.json()
+
+    assert response.status_code == 200
+    assert body["message"] == "Registro alterado com sucesso"
+
+
+def test_delete_product_as_admin():
+    token = admin_token()
+    payload = new_product_payload()
+    creation_response = ProdutosService.create(token, payload)
+    assert creation_response.status_code == 201
+    product_id = creation_response.json()["_id"]
+
+    response = ProdutosService.delete(product_id, token)
+    body = response.json()
+
+    assert response.status_code == 200
+    assert "Registro excluído" in body["message"]
 
     assert response.status_code == 200
     assert body["_id"] == product_id
