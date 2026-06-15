@@ -157,6 +157,12 @@ def put_edit_user(user_id, payload):
         json=payload
     )
 
+def get_user_by_id(user_id):
+    return requests.get(
+        ENDPOINT + "/usuarios",
+        params={"_id": user_id}
+    )
+
 def delete_user(user_id):
     return requests.delete(ENDPOINT + f"/usuarios/{user_id}")
 
